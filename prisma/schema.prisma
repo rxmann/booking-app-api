@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Movie {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  durationMin Int
+  screenings  Screening[]
+  createdAt   DateTime    @default(now())
+}
+
+model Theatre {
+  id          Int          @id @default(autoincrement())
+  name        String
+  address     String
+  auditoriums Auditorium[]
+  createdAt   DateTime     @default(now())
+}
+
+model Auditorium {
+  id         Int         @id @default(autoincrement())
+  name       String
+  theatre    Theatre     @relation(fields: [theatreId], references: [id])
+  theatreId  Int
+  seats      Seat[]
+  screenings Screening[]
+}
+
+model Seat {
+  id           Int           @id @default(autoincrement())
+  row          String
+  number       Int
+  auditorium   Auditorium    @relation(fields: [auditoriumId], references: [id])
+  auditoriumId Int
+  bookingSeats BookingSeat[]
+
+  @@unique([auditoriumId, row, number])
+}
+
+model Screening {
+  id           Int       @id @default(autoincrement())
+  movie        Movie     @relation(fields: [movieId], references: [id])
+  movieId      Int
+  auditorium   Auditorium @relation(fields: [auditoriumId], references: [id])
+  auditoriumId Int
+  startsAt     DateTime
+  bookings     Booking[]
+  createdAt    DateTime  @default(now())
+
+  @@index([movieId])
+  @@index([auditoriumId])
+  @@index([startsAt])
+}
+
+model Booking {
+  id           Int           @id @default(autoincrement())
+  user         User          @relation(fields: [userId], references: [id])
+  userId       Int
+  screening    Screening     @relation(fields: [screeningId], references: [id])
+  screeningId  Int
+  status       BookingStatus @default(HOLD)
+  expiresAt    DateTime
+  bookingSeats BookingSeat[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([screeningId])
+}
+
+model BookingSeat {
+  id          Int       @id @default(autoincrement())
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  bookingId   Int
+  seat        Seat      @relation(fields: [seatId], references: [id])
+  seatId      Int
+  screeningId Int
+
+  @@unique([screeningId, seatId])
+  @@index([bookingId])
+}
+
+enum BookingStatus {
+  HOLD
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
