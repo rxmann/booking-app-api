@@ -1,20 +1,33 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
   id        Int       @id @default(autoincrement())
   email     String    @unique
   password  String
+  name      String?
   bookings  Booking[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model Address {
+  id         Int       @id @default(autoincrement())
+  line1      String
+  line2      String?
+  city       String
+  state      String?
+  country    String
+  postalCode String
+  theatres   Theatre[]
+  createdAt  DateTime  @default(now())
 }
 
 model Movie {
@@ -22,6 +35,8 @@ model Movie {
   title       String
   description String?
   durationMin Int
+  posterUrl   String?
+  releaseDate DateTime?
   screenings  Screening[]
   createdAt   DateTime    @default(now())
 }
@@ -29,7 +44,8 @@ model Movie {
 model Theatre {
   id          Int          @id @default(autoincrement())
   name        String
-  address     String
+  address     Address      @relation(fields: [addressId], references: [id])
+  addressId   Int
   auditoriums Auditorium[]
   createdAt   DateTime     @default(now())
 }
@@ -47,6 +63,7 @@ model Seat {
   id           Int           @id @default(autoincrement())
   row          String
   number       Int
+  type         String        @default("STANDARD")
   auditorium   Auditorium    @relation(fields: [auditoriumId], references: [id])
   auditoriumId Int
   bookingSeats BookingSeat[]
@@ -55,17 +72,18 @@ model Seat {
 }
 
 model Screening {
-  id           Int       @id @default(autoincrement())
-  movie        Movie     @relation(fields: [movieId], references: [id])
+  id           Int        @id @default(autoincrement())
+  movie        Movie      @relation(fields: [movieId], references: [id])
   movieId      Int
   auditorium   Auditorium @relation(fields: [auditoriumId], references: [id])
   auditoriumId Int
   startsAt     DateTime
+  endsAt       DateTime
+  price        Decimal    @db.Decimal(10, 2)
   bookings     Booking[]
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime   @default(now())
 
   @@index([movieId])
-  @@index([auditoriumId])
   @@index([startsAt])
 }
 
@@ -75,7 +93,7 @@ model Booking {
   userId       Int
   screening    Screening     @relation(fields: [screeningId], references: [id])
   screeningId  Int
-  status       BookingStatus @default(HOLD)
+  status       String        @default("HOLD")
   expiresAt    DateTime
   bookingSeats BookingSeat[]
   createdAt    DateTime      @default(now())
@@ -86,20 +104,13 @@ model Booking {
 }
 
 model BookingSeat {
-  id          Int       @id @default(autoincrement())
-  booking     Booking   @relation(fields: [bookingId], references: [id])
+  id          Int     @id @default(autoincrement())
+  booking     Booking @relation(fields: [bookingId], references: [id])
   bookingId   Int
-  seat        Seat      @relation(fields: [seatId], references: [id])
+  seat        Seat    @relation(fields: [seatId], references: [id])
   seatId      Int
   screeningId Int
 
   @@unique([screeningId, seatId])
   @@index([bookingId])
-}
-
-enum BookingStatus {
-  HOLD
-  CONFIRMED
-  CANCELLED
-  EXPIRED
 }

@@ -3,7 +3,7 @@ services:
     image: bitnami/postgresql
     container_name: postgres_database
     ports:
-      - '5432:5432'
+      - '5555:5432'
     environment:
       - POSTGRESQL_USERNAME=${POSTGRESQL_USERNAME}
       - POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD}

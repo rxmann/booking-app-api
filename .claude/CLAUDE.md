@@ -29,5 +29,4 @@ npx prisma generate                     # regenerate client
 Load these with `@` when working on the relevant area:
 - `@.claude/rules/domain.md` — models, relationships, booking statuses
 - `@.claude/rules/booking-rules.md` — reservation rules, concurrency & locking strategy
-- `@.claude/rules/api.md` — full API routes, auth, validation rules
 - `@.claude/rules/testing.md` — testing strategy, what to cover, concurrency test patterns
