@@ -15,6 +15,7 @@ pnpm build                              # compile
 pnpm test                               # unit tests
 npx prisma migrate dev --name <name>    # new migration
 npx prisma generate                     # regenerate client
+npx prisma db seed                      # seed movies, theatres, screenings
 ```
 
 ## Dev Guidelines
@@ -27,6 +28,11 @@ npx prisma generate                     # regenerate client
 
 ## On-Demand Context
 Load these with `@` when working on the relevant area:
-- `@.claude/rules/domain.md` — models, relationships, booking statuses
+- `@.claude/rules/domain.md` — models, relationships, auth rules
 - `@.claude/rules/booking-rules.md` — reservation rules, concurrency & locking strategy
-- `@.claude/rules/testing.md` — testing strategy, what to cover, concurrency test patterns
+- `@.claude/rules/api-guidelines.md` — endpoint status (done/pending) and design contract
+- `@.claude/rules/testing.md` — testing contract (unit + e2e patterns, concurrency)
+
+## Skills
+Procedures to follow when performing a specific task. Invoke with `/skill-name`:
+- `generate-test` — `/generate-test <service> [prompt]` — generates spec files following the testing contract

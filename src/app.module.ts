@@ -4,9 +4,12 @@ import { AppService } from './app.service.js';
 import { ConfigModule } from './modules/config/config.module.js';
 import { PrismaModule } from './modules/prisma/prisma.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { MoviesModule } from './modules/movies/movies.module.js';
+import { ScreeningsModule } from './modules/screenings/screenings.module.js';
+import { BookingsModule } from './modules/bookings/bookings.module.js';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, AuthModule],
+  imports: [ConfigModule, PrismaModule, AuthModule, MoviesModule, ScreeningsModule, BookingsModule],
   controllers: [AppController],
   providers: [AppService],
 })

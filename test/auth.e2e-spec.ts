@@ -120,7 +120,7 @@ describe('Auth (e2e)', () => {
       token = res.body.accessToken as string;
     });
 
-    it('200 — returns the authenticated user's profile', async () => {
+    it("200 — returns the authenticated user's profile", async () => {
       const res = await request(app.getHttpServer())
         .get('/api/v1/auth/profile')
         .set('Authorization', `Bearer ${token}`)

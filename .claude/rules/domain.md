@@ -27,6 +27,17 @@ CANCELLED  — user cancelled
 EXPIRED    — hold TTL passed without confirmation
 ```
 
+## Auth Rules
+Guard applied per-route with `@UseGuards(JwtGuard)` — no global guard, so routes are public by default.
+
+| Endpoint group | Auth required |
+|---|---|
+| `auth/register`, `auth/login` | No |
+| `auth/profile` | Yes |
+| `movies/*` | No |
+| `screenings/*` | No |
+| `bookings/*` | Yes |
+
 ## Schema Location
 `prisma/schema.prisma` — source of truth.
 Generated client: `src/generated/prisma`.

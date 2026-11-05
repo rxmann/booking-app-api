@@ -1,42 +1,32 @@
 # Testing Strategy
 
 ## Stack
-Jest (configured in `jest.config.ts`). E2E config in `test/jest-e2e.json`.
 
-## Layers
+Jest (`jest.config.ts`). E2E config: `test/jest-e2e.json`.
 
-### Unit Tests (`src/**/*.spec.ts`)
-- Test service methods in isolation.
-- Mock Prisma client with `jest.fn()` or a manual mock.
-- Cover: status transition logic, expiry checks, seat validation, ownership checks.
+## Unit Tests (`src/**/*.spec.ts`)
+
+- Use `Testing.Module`; mock all deps with `jest.fn()`; reset in `beforeEach`.
+- Assert both the return value and the exact Prisma/service calls (args included).
 - No DB, no HTTP.
 
-### Integration Tests (`test/**/*.integration.spec.ts`)
-- Hit a real test database (separate DB or same with transaction rollback per test).
-- Wrap each test in a transaction, roll back after — keeps tests isolated and fast.
-- Cover: Prisma queries, migration correctness, unique constraint enforcement.
+## E2E Tests (`test/**/*.e2e-spec.ts`)
 
-### E2E Tests (`test/**/*.e2e-spec.ts`)
-- Spin up the full NestJS app with `supertest`.
-- Cover the golden path for each endpoint.
-- Auth: generate a real JWT or use a test helper.
+- Boot the full app with `createNestApplication`; mirror `main.ts` exactly (global prefix `api/v1`, `ValidationPipe` with `whitelist: true, transform: true`).
+- Use a dedicated test-only user/data; delete it in `afterAll` via `prisma.deleteMany`.
+- For protected routes: obtain a real JWT via login in `beforeAll`; attach as `Authorization: Bearer <token>`.
+- Assert sensitive fields (e.g. `password`) are absent from every response body.
 
-## Critical Scenarios to Cover
-1. **Concurrent hold attempts** — two requests try to book the same seat simultaneously; only one succeeds, the other gets a 409.
-2. **Hold expiry + confirm** — expired booking returns 422/409 on confirm attempt.
-3. **Hold expiry + new booking** — expired seat becomes available again.
-4. **Seat ownership** — confirm/cancel by a different user returns 403.
-5. **Past screening** — booking a past screening returns 400.
-6. **Seat not in auditorium** — booking a seat from the wrong auditorium returns 400.
+## Concurrency Tests (e2e layer only)
 
-## Concurrency Test Pattern
-Use `Promise.all` with multiple simultaneous requests for the same seat:
+Use `Promise.all` for simultaneous requests; assert exactly one success and the rest conflicts:
+
 ```ts
 const results = await Promise.all(
-  Array.from({ length: 5 }, () => request(app).post('/api/v1/bookings').send(payload))
+  Array.from({ length: 5 }, () =>
+    request(app).post('/api/v1/bookings').send(payload),
+  ),
 );
-const successes = results.filter(r => r.status === 201);
-const conflicts = results.filter(r => r.status === 409);
-expect(successes).toHaveLength(1);
-expect(conflicts).toHaveLength(4);
+expect(results.filter((r) => r.status === 201)).toHaveLength(1);
+expect(results.filter((r) => r.status === 409)).toHaveLength(4);
 ```
