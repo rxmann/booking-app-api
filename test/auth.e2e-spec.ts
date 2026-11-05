@@ -12,7 +12,7 @@
  * Run with: pnpm test:e2e
  * Requires: DB running and migrations applied (npx prisma migrate dev)
  */
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types';
@@ -35,9 +35,8 @@ describe('Auth (e2e)', () => {
     }).compile();
 
     app = module.createNestApplication();
-    // Mirror main.ts setup so routes and validation behave identically.
+    // Mirror main.ts setup; pipe, filters and interceptor come from CommonModule.
     app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
     prisma = module.get(PrismaService);
@@ -58,10 +57,10 @@ describe('Auth (e2e)', () => {
         .send(TEST_USER)
         .expect(201);
 
-      expect(res.body.email).toBe(TEST_USER.email);
-      expect(res.body.name).toBe(TEST_USER.name);
-      expect(res.body).toHaveProperty('id');
-      expect(res.body).not.toHaveProperty('password');
+      expect(res.body.data.email).toBe(TEST_USER.email);
+      expect(res.body.data.name).toBe(TEST_USER.name);
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data).not.toHaveProperty('password');
     });
 
     it('409 — duplicate email is rejected', () => {
@@ -71,11 +70,11 @@ describe('Auth (e2e)', () => {
         .expect(409);
     });
 
-    it('400 — missing required fields are rejected by the validation pipe', () => {
+    it('422 — missing required fields are rejected by the validation pipe', () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/register')
         .send({ email: 'bad' }) // no name, no password, invalid email
-        .expect(400);
+        .expect(422);
     });
   });
 
@@ -88,8 +87,8 @@ describe('Auth (e2e)', () => {
         .send({ email: TEST_USER.email, password: TEST_USER.password })
         .expect(200);
 
-      expect(res.body).toHaveProperty('accessToken');
-      expect(typeof res.body.accessToken).toBe('string');
+      expect(res.body.data).toHaveProperty('accessToken');
+      expect(typeof res.body.data.accessToken).toBe('string');
     });
 
     it('401 — wrong password is rejected', () => {
@@ -117,7 +116,7 @@ describe('Auth (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: TEST_USER.email, password: TEST_USER.password });
-      token = res.body.accessToken as string;
+      token = res.body.data.accessToken as string;
     });
 
     it("200 — returns the authenticated user's profile", async () => {
@@ -126,9 +125,9 @@ describe('Auth (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      expect(res.body.email).toBe(TEST_USER.email);
-      expect(res.body.name).toBe(TEST_USER.name);
-      expect(res.body).not.toHaveProperty('password');
+      expect(res.body.data.email).toBe(TEST_USER.email);
+      expect(res.body.data.name).toBe(TEST_USER.name);
+      expect(res.body.data).not.toHaveProperty('password');
     });
 
     it('401 — request without a token is rejected', () => {

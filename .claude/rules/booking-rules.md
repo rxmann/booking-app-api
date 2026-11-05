@@ -10,3 +10,4 @@ EXPIRED    — hold TTL passed without confirmation
 
 ## DB-Level Concurrency Guard
 `BookingSeat` has `@@unique([screeningId, seatId])` — prevents duplicate seat claims at the database level.
+A racing request hits that constraint (Prisma P2002); `PrismaExceptionFilter` returns it as `409 BookingSeat already exists`. The service does not catch it.

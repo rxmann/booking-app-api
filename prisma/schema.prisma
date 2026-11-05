@@ -13,6 +13,7 @@ model User {
   email     String    @unique
   password  String
   name      String?
+  role      String    @default("USER")
   bookings  Booking[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -64,6 +65,7 @@ model Seat {
   row          String
   number       Int
   type         String        @default("STANDARD")
+  status       String        @default("ACTIVE")
   auditorium   Auditorium    @relation(fields: [auditoriumId], references: [id])
   auditoriumId Int
   bookingSeats BookingSeat[]

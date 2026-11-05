@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as bcrypt from 'bcrypt';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
@@ -11,6 +12,20 @@ function seats(rows: string[], perRow: number) {
 }
 
 async function main() {
+  // Admin user is upserted (never wiped) so existing logins survive re-seeding.
+  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@example.com';
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'admin12345';
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { role: 'ADMIN' },
+    create: {
+      email: adminEmail,
+      name: 'Admin',
+      password: await bcrypt.hash(adminPassword, 10),
+      role: 'ADMIN',
+    },
+  });
+
   // Clean slate so re-runs are deterministic
   await prisma.bookingSeat.deleteMany();
   await prisma.booking.deleteMany();

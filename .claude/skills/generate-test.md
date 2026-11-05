@@ -1,3 +1,9 @@
+---
+description: Generate unit and/or e2e test files for a NestJS service following the project testing contract
+allowed-tools: Read, Write, Edit, Bash
+argument-hint: <service-name> [prompt]
+---
+
 # /generate-test
 
 Generate test files for a NestJS service following the project's testing contract.

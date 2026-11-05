@@ -15,13 +15,14 @@ pnpm build                              # compile
 pnpm test                               # unit tests
 npx prisma migrate dev --name <name>    # new migration
 npx prisma generate                     # regenerate client
-npx prisma db seed                      # seed movies, theatres, screenings
+npx prisma db seed                      # wipes+seeds catalog (movies, theatres, screenings); upserts admin user
 ```
 
 ## Dev Guidelines
 - Controllers thin — business logic in services.
 - DTOs for all request validation (`class-validator`).
 - Prisma client types everywhere; no raw type casting.
+- Throw only `common/exceptions` types; return raw data from controllers (envelope/error shape are global). See `@.claude/rules/api-guidelines.md`.
 - For raw SQL (locking): `prisma.$queryRaw` / `prisma.$executeRaw`.
 - Migrations only via `prisma migrate dev`; never edit DB manually.
 - No unnecessary abstractions. Follow existing patterns first.

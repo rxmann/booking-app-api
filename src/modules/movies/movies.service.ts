@@ -1,22 +1,30 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ResourceNotFoundException } from '../common/exceptions/index.js';
+import { pageArgs, paginated } from '../common/pagination/paginated.js';
+import type { PaginationQueryDto } from '../common/pagination/pagination-query.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class MoviesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.movie.findMany({
-      orderBy: { releaseDate: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        durationMin: true,
-        posterUrl: true,
-        releaseDate: true,
-      },
-    });
+  async findAll(query: PaginationQueryDto) {
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.movie.findMany({
+        ...pageArgs(query),
+        orderBy: [{ releaseDate: 'desc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          durationMin: true,
+          posterUrl: true,
+          releaseDate: true,
+        },
+      }),
+      this.prisma.movie.count(),
+    ]);
+    return paginated(items, total, query);
   }
 
   async findOne(id: number) {
@@ -32,7 +40,7 @@ export class MoviesService {
       },
     });
 
-    if (!movie) throw new NotFoundException(`Movie #${id} not found`);
+    if (!movie) throw new ResourceNotFoundException('Movie', id);
 
     return movie;
   }

@@ -12,10 +12,11 @@ Jest (`jest.config.ts`). E2E config: `test/jest-e2e.json`.
 
 ## E2E Tests (`test/**/*.e2e-spec.ts`)
 
-- Boot the full app with `createNestApplication`; mirror `main.ts` exactly (global prefix `api/v1`, `ValidationPipe` with `whitelist: true, transform: true`).
+- Boot the full app with `createNestApplication`; mirror `main.ts` (global prefix `api/v1`). Validation pipe, filters and interceptor come from `CommonModule` — do not re-register them. Validation failures return 422.
 - Use a dedicated test-only user/data; delete it in `afterAll` via `prisma.deleteMany`.
 - For protected routes: obtain a real JWT via login in `beforeAll`; attach as `Authorization: Bearer <token>`.
 - Assert sensitive fields (e.g. `password`) are absent from every response body.
+- Success bodies are wrapped by `ResponseInterceptor`: read payloads from `res.body.data`, not `res.body`. Errors use the flat `ErrorResponse` shape (`success: false`, `statusCode`, `error`, `message`).
 
 ## Concurrency Tests (e2e layer only)
 
