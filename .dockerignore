@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.git
+.idea
+.claude
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+Dockerfile
